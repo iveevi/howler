@@ -5,6 +5,10 @@
 
 #include "howler.hpp"
 
+#ifndef HOWLER_PREFIX
+#define HOWLER_PREFIX "howler"
+#endif
+
 using clk_t = std::chrono::high_resolution_clock;
 
 struct {
@@ -44,7 +48,7 @@ void reset(bool enable_logging_time_stamps)
 void assertion(const std::string &message)
 {
 	// TODO: line numbers...?
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[icarus] ");
+	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
 
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
@@ -57,7 +61,7 @@ void assertion(const std::string &message)
 void fatal(const std::string &message)
 {
 	// TODO: line numbers...?
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[icarus] ");
+	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
 
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
@@ -69,7 +73,7 @@ void fatal(const std::string &message)
 
 void error(const std::string &message)
 {
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[icarus] ");
+	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
 
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
@@ -80,7 +84,7 @@ void error(const std::string &message)
 
 void warning(const std::string &message)
 {
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[icarus] ");
+	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
 
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
@@ -91,7 +95,7 @@ void warning(const std::string &message)
 
 void info(const std::string &message)
 {
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[icarus] ");
+	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
 
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
