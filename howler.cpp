@@ -39,6 +39,7 @@ struct {
 
 namespace howler {
 
+// TODO: use source location (C++20...)
 void reset(bool enable_logging_time_stamps)
 {
 	timer.enable_logging_time_stamps = enable_logging_time_stamps;
@@ -48,60 +49,65 @@ void reset(bool enable_logging_time_stamps)
 void assertion(const std::string &message)
 {
 	// TODO: line numbers...?
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
+		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
 	fmt::print(fmt::fg(fmt::color::purple) | fmt::emphasis::bold, "(assertion) ");
-	fmt::print(fmt::fg(fmt::color::light_gray), "{}\n", message);
+	fmt::print(fmt::emphasis::faint, "{}\n", message);
 	__builtin_trap();
 }
 
 void fatal(const std::string &message)
 {
 	// TODO: line numbers...?
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
+		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
 	fmt::print(fmt::fg(fmt::color::saddle_brown) | fmt::emphasis::bold, "(fatal) ");
-	fmt::print(fmt::fg(fmt::color::light_gray), "{}\n", message);
+	fmt::print(fmt::emphasis::faint, "{}\n", message);
 	__builtin_trap();
 }
 
 void error(const std::string &message)
 {
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
+		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
 	fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "(error) ");
-	fmt::print(fmt::fg(fmt::color::light_gray), "{}\n", message);
+	fmt::print(fmt::emphasis::faint, "{}\n", message);
 }
 
 void warning(const std::string &message)
 {
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
+		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
 	fmt::print(fmt::fg(fmt::color::yellow) | fmt::emphasis::bold, "(warning) ");
-	fmt::print(fmt::fg(fmt::color::light_gray), "{}\n", message);
+	fmt::print(fmt::emphasis::faint, "{}\n", message);
 }
 
 void info(const std::string &message)
 {
-	fmt::print(fmt::fg(fmt::color::gray) | fmt::emphasis::bold, "[" HOWLER_PREFIX "] ");
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::fg(fmt::color::light_gray), "[{}] ", timer.timestamp());
+		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
 	fmt::print(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "(info) ");
-	fmt::print(fmt::fg(fmt::color::light_gray), "{}\n", message);
+	fmt::print(fmt::emphasis::faint, "{}\n", message);
 }
 
 }
