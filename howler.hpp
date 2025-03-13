@@ -3,15 +3,17 @@
 #include <fmt/format.h>
 #include <fmt/printf.h>
 
+#include <source_location>
+
 namespace howler {
 
 void reset(bool);
 
-void assertion	(const std::string &);
-void fatal	(const std::string &);
-void error	(const std::string &);
-void warning	(const std::string &);
-void info	(const std::string &);
+void assertion	(const std::string &, const std::source_location & = std::source_location::current());
+void fatal	(const std::string &, const std::source_location & = std::source_location::current());
+void error	(const std::string &, const std::source_location & = std::source_location::current());
+void warning	(const std::string &, const std::source_location & = std::source_location::current());
+void info	(const std::string &, const std::source_location & = std::source_location::current());
 
 }
 
