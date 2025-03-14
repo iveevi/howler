@@ -18,7 +18,24 @@ Howler is a lightweight logging system for C++20 that provides different levels 
 
 ## Building
 
-Howler relies on the `fmt` printing library to format and style terminal messages. We recommend users to use Howler via CMake, e.g. with `add_subdirectory(.../howler)`. To this end, if the root project already has an instance of `fmt`, users can add `set(HOWLER_FMT_EXTERNAL TRUE)` to their CMake config to tell Howler not to use its local `fmt` repository.
+Howler relies on the `fmt` printing library to format and style terminal
+messages. We recommend users to use Howler via CMake with the `add_subdirectory`
+command. See the example below, which also indicates configuration options for
+Howler.
+
+```cmake
+# Optional: set the project name for Howler to use
+add_compile_definitions(HOWLER_PREFIX="myproject")
+
+# Optional: tell Howler not to use its local fmt repository
+set(HOWLER_FMT_EXTERNAL TRUE)
+
+# Optional: include an independant repository of fmt
+add_subdirectory(thirdparty/fmt)
+
+# REQUIRED: tell CMake to include Howler
+add_subdirectory(thirdparty/howler)
+```
 
 Finally, simply include `howler.hpp` in your source file:
 
