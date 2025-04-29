@@ -5,10 +5,6 @@
 
 #include "howler.hpp"
 
-#ifndef HOWLER_PREFIX
-#define HOWLER_PREFIX "howler"
-#endif
-
 using clk_t = std::chrono::high_resolution_clock;
 
 struct {
@@ -45,9 +41,9 @@ void reset(bool enable_logging_time_stamps)
 	timer.restart();
 }
 
-void assertion(const std::string &message, const std::source_location &loc)
+void assertion(const std::string &prefix, const std::string &message, const std::source_location &loc)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
 	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
@@ -60,10 +56,10 @@ void assertion(const std::string &message, const std::source_location &loc)
 	__builtin_trap();
 }
 
-void fatal(const std::string &message, const std::source_location &loc)
+void fatal(const std::string &prefix, const std::string &message, const std::source_location &loc)
 {
 	// TODO: line numbers...?
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
 	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
@@ -76,9 +72,9 @@ void fatal(const std::string &message, const std::source_location &loc)
 	__builtin_trap();
 }
 
-void error(const std::string &message, const std::source_location &)
+void error(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
 	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
@@ -88,9 +84,9 @@ void error(const std::string &message, const std::source_location &)
 	fmt::println("{}", message);
 }
 
-void warning(const std::string &message, const std::source_location &)
+void warning(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
 	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
@@ -100,9 +96,9 @@ void warning(const std::string &message, const std::source_location &)
 	fmt::println("{}", message);
 }
 
-void info(const std::string &message, const std::source_location &)
+void info(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, HOWLER_PREFIX);
+	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
 	fmt::print(" ");
 
 	if (timer.enable_logging_time_stamps)
