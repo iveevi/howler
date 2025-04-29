@@ -28,5 +28,5 @@ void info	(const std::string &, const std::string &, const std::source_location 
 
 #define howl_fatal(...)	  howler::fatal(HOWLER_PREFIX, fmt::format(__VA_ARGS__))
 #define howl_error(...)	  howler::error(HOWLER_PREFIX, fmt::format(__VA_ARGS__))
-#define howl_warning(...) howler::warning(HOWLER_PREFIX fmt::format(__VA_ARGS__))
+#define howl_warning(...) howler::warning(HOWLER_PREFIX, fmt::format(__VA_ARGS__))
 #define howl_info(...)	  howler::info(HOWLER_PREFIX, fmt::format(__VA_ARGS__))

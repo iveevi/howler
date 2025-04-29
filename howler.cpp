@@ -43,13 +43,11 @@ void reset(bool enable_logging_time_stamps)
 
 void assertion(const std::string &prefix, const std::string &message, const std::source_location &loc)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
-	fmt::print(" ");
-
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
-	fmt::print(fmt::fg(fmt::color::purple) | fmt::emphasis::bold, "(assertion) ");
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(fmt::color::purple) | fmt::emphasis::bold, "#assertion ");
 	fmt::println("{}", message);
 	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
 	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
@@ -59,13 +57,11 @@ void assertion(const std::string &prefix, const std::string &message, const std:
 void fatal(const std::string &prefix, const std::string &message, const std::source_location &loc)
 {
 	// TODO: line numbers...?
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
-	fmt::print(" ");
-
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
-	fmt::print(fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold, "(fatal) ");
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold, "#fatal ");
 	fmt::println("{}", message);
 	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
 	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
@@ -74,37 +70,31 @@ void fatal(const std::string &prefix, const std::string &message, const std::sou
 
 void error(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
-	fmt::print(" ");
-
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
-	fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "(error) ");
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "#error ");
 	fmt::println("{}", message);
 }
 
 void warning(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
-	fmt::print(" ");
-
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
-	fmt::print(fmt::fg(fmt::color::yellow) | fmt::emphasis::bold, "(warning) ");
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(fmt::color::yellow) | fmt::emphasis::bold, "#warning ");
 	fmt::println("{}", message);
 }
 
 void info(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	fmt::print(fmt::emphasis::underline | fmt::emphasis::bold, "{}", prefix);
-	fmt::print(" ");
-
 	if (timer.enable_logging_time_stamps)
 		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
 
-	fmt::print(fmt::fg(fmt::color::blue) | fmt::emphasis::bold, "(info) ");
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(fmt::color::medium_blue) | fmt::emphasis::bold, "#info ");
 	fmt::println("{}", message);
 }
 
