@@ -7,5 +7,5 @@ if(NOT DEFINED HOWLER_FMT_EXTERNAL)
 endif()
 
 add_library(howler STATIC howler.cpp)
-target_link_libraries(howler fmt)
+target_link_libraries(howler fmt::fmt)
 target_include_directories(howler INTERFACE .)
