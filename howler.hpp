@@ -9,11 +9,12 @@ namespace howler {
 
 void reset(bool);
 
-void assertion	(const std::string &, const std::string &, const std::source_location & = std::source_location::current());
+[[noreturn]]
 void fatal	(const std::string &, const std::string &, const std::source_location & = std::source_location::current());
 void error	(const std::string &, const std::string &, const std::source_location & = std::source_location::current());
 void warning	(const std::string &, const std::string &, const std::source_location & = std::source_location::current());
 void info	(const std::string &, const std::string &, const std::source_location & = std::source_location::current());
+void assertion	(const std::string &, const std::string &, const std::source_location & = std::source_location::current());
 
 } // namespace howler
 

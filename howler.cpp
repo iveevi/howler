@@ -41,19 +41,6 @@ void reset(bool enable_logging_time_stamps)
 	timer.restart();
 }
 
-void assertion(const std::string &prefix, const std::string &message, const std::source_location &loc)
-{
-	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
-
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::purple) | fmt::emphasis::bold, "#{:<9} ", "assertion");
-	fmt::println("{}", message);
-	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
-	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
-	__builtin_trap();
-}
-
 void fatal(const std::string &prefix, const std::string &message, const std::source_location &loc)
 {
 	if (timer.enable_logging_time_stamps)
@@ -95,6 +82,19 @@ void info(const std::string &prefix, const std::string &message, const std::sour
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
 	fmt::print(fmt::fg(fmt::color::medium_blue) | fmt::emphasis::bold, "#{:<9} ", "info");
 	fmt::println("{}", message);
+}
+
+void assertion(const std::string &prefix, const std::string &message, const std::source_location &loc)
+{
+	if (timer.enable_logging_time_stamps)
+		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
+
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(fmt::color::purple) | fmt::emphasis::bold, "#{:<9} ", "assertion");
+	fmt::println("{}", message);
+	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
+	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
+	__builtin_trap();
 }
 
 }
