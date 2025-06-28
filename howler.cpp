@@ -5,23 +5,37 @@
 
 #include "howler.hpp"
 
-using clk_t = std::chrono::high_resolution_clock;
+// Internal logging state
+struct State {
+	using clk_t = std::chrono::high_resolution_clock;
 
-struct {
 	clk_t clock;
 	clk_t::time_point epoch;
+	clk_t::time_point current;
 
-	bool enable_logging_time_stamps;
-
-	void restart() {
+	State() {
 		epoch = clock.now();
+		restart();
 	}
 
-	std::string timestamp() {
-		auto now = clock.now();
-		auto count = std::chrono::duration_cast <std::chrono::microseconds> (now - epoch).count();
+	void restart() {
+		current = clock.now();
+	}
 
-		int32_t milliseconds = count / 1000.0;
+	std::string relative_timestamp() {
+		auto now = clock.now();
+		auto count = std::chrono::duration_cast <std::chrono::microseconds> (now - current).count();
+		return delta_to_stamp(count);
+	}
+	
+	std::string real_timestamp() {
+		auto now = clock.now();
+		auto count = std::chrono::duration_cast <std::chrono::microseconds> (now - current).count();
+		return delta_to_stamp(count);
+	}
+
+	static std::string delta_to_stamp(int64_t delta) {
+		int32_t milliseconds = delta / 1000.0;
 
 		int32_t seconds = milliseconds / 1000;
 		milliseconds %= 1000;
@@ -31,33 +45,29 @@ struct {
 
 		return fmt::format("{}:{:02d}:{:03d}", minutes, seconds, milliseconds);
 	}
-} timer;
+} state;
 
 namespace howler {
 
-void reset(bool enable_logging_time_stamps)
+void relative_time_stamp()
 {
-	timer.enable_logging_time_stamps = enable_logging_time_stamps;
-	timer.restart();
+	fmt::print(fmt::emphasis::faint, "[{}] ", state.relative_timestamp());
 }
 
-void fatal(const std::string &prefix, const std::string &message, const std::source_location &loc)
+void reset(const std::string &prefix, const std::string &message)
 {
-	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
+	fmt::print(fmt::emphasis::faint | fmt::emphasis::bold, "\n[{}] ", state.real_timestamp());
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold, "#{:<9} ", "fatal");
+	fmt::print(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "#{:<9} ", "reset");
 	fmt::println("{}", message);
-	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
-	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
-	__builtin_trap();
+	
+	state.restart();
 }
 
 void error(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
+	relative_time_stamp();
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
 	fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "#{:<9} ", "error");
@@ -66,8 +76,7 @@ void error(const std::string &prefix, const std::string &message, const std::sou
 
 void warning(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
+	relative_time_stamp();
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
 	fmt::print(fmt::fg(fmt::color::yellow) | fmt::emphasis::bold, "#{:<9} ", "warning");
@@ -76,8 +85,7 @@ void warning(const std::string &prefix, const std::string &message, const std::s
 
 void info(const std::string &prefix, const std::string &message, const std::source_location &)
 {
-	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
+	relative_time_stamp();
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
 	fmt::print(fmt::fg(fmt::color::medium_blue) | fmt::emphasis::bold, "#{:<9} ", "info");
@@ -86,14 +94,27 @@ void info(const std::string &prefix, const std::string &message, const std::sour
 
 void assertion(const std::string &prefix, const std::string &message, const std::source_location &loc)
 {
-	if (timer.enable_logging_time_stamps)
-		fmt::print(fmt::emphasis::faint, "[{}] ", timer.timestamp());
-
+	relative_time_stamp();
+	
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
 	fmt::print(fmt::fg(fmt::color::purple) | fmt::emphasis::bold, "#{:<9} ", "assertion");
 	fmt::println("{}", message);
 	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
 	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
+
+	__builtin_trap();
+}
+
+void fatal(const std::string &prefix, const std::string &message, const std::source_location &loc)
+{
+	relative_time_stamp();
+
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold, "#{:<9} ", "fatal");
+	fmt::println("{}", message);
+	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
+	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
+
 	__builtin_trap();
 }
 
