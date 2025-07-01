@@ -5,6 +5,12 @@
 
 #include "howler.hpp"
 
+#ifdef _MSC_VER
+#define breakdown	__debugbreak
+#else
+#define breakdown	__builtin_trap
+#endif
+
 // Internal logging state
 struct State {
 	using clk_t = std::chrono::high_resolution_clock;
@@ -61,7 +67,6 @@ void reset(const std::string &prefix, const std::string &message)
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
 	fmt::print(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "#{:<9} ", "reset");
 	fmt::println("{}", message);
-	
 	state.restart();
 }
 
@@ -101,10 +106,11 @@ void assertion(const std::string &prefix, const std::string &message, const std:
 	fmt::println("{}", message);
 	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
 	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
-
-	__builtin_trap();
+	
+	breakdown();
 }
 
+[[noreturn]]
 void fatal(const std::string &prefix, const std::string &message, const std::source_location &loc)
 {
 	relative_time_stamp();
@@ -115,7 +121,7 @@ void fatal(const std::string &prefix, const std::string &message, const std::sou
 	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
 	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
 
-	__builtin_trap();
+	breakdown();
 }
 
-}
+} // namespace howler
