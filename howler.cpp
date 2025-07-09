@@ -12,14 +12,14 @@
 #endif
 
 // Internal logging state
-struct State {
+struct Howler {
 	using clk_t = std::chrono::high_resolution_clock;
 
 	clk_t clock;
 	clk_t::time_point epoch;
 	clk_t::time_point current;
 
-	State() {
+	Howler() {
 		epoch = clock.now();
 		restart();
 	}
@@ -51,75 +51,112 @@ struct State {
 
 		return fmt::format("{}:{:02d}:{:03d}", minutes, seconds, milliseconds);
 	}
-} state;
+} singleton;
 
 namespace howler {
 
+// Message type colors
+static constexpr auto color_reset  = fmt::color::green;
+static constexpr auto color_error  = fmt::color::red;
+static constexpr auto color_warn   = fmt::color::golden_rod;
+static constexpr auto color_info   = fmt::color::teal;
+static constexpr auto color_debug  = fmt::color::orange;
+static constexpr auto color_fatal  = fmt::color::brown;
+static constexpr auto color_assert = fmt::color::magenta;
+
 void relative_time_stamp()
 {
-	fmt::print(fmt::emphasis::faint, "[{}] ", state.relative_timestamp());
+	fmt::print(fmt::emphasis::faint, "[{}] ", singleton.relative_timestamp());
+}
+
+void triggered_from(const std::source_location &loc)
+{
+	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
+	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
 }
 
 void reset(const std::string &prefix, const std::string &message)
 {
-	fmt::print(fmt::emphasis::faint | fmt::emphasis::bold, "\n[{}] ", state.real_timestamp());
+	fmt::print(fmt::emphasis::faint | fmt::emphasis::bold, "\n[{}] ", singleton.real_timestamp());
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::green) | fmt::emphasis::bold, "#{:<9} ", "reset");
+	fmt::print(fmt::fg(color_reset) | fmt::emphasis::bold, "#{:<9} ", "reset");
 	fmt::println("{}", message);
-	state.restart();
+
+	singleton.restart();
 }
 
-void error(const std::string &prefix, const std::string &message, const std::source_location &)
+void error(const std::string &prefix,
+	   const std::string &message,
+	   const std::source_location &)
 {
 	relative_time_stamp();
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::red) | fmt::emphasis::bold, "#{:<9} ", "error");
+	fmt::print(fmt::fg(color_error) | fmt::emphasis::bold, "#{:<9} ", "error");
 	fmt::println("{}", message);
 }
 
-void warning(const std::string &prefix, const std::string &message, const std::source_location &)
+void warning(const std::string &prefix,
+	     const std::string &message,
+	     const std::source_location &)
 {
 	relative_time_stamp();
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::yellow) | fmt::emphasis::bold, "#{:<9} ", "warning");
+	fmt::print(fmt::fg(color_warn) | fmt::emphasis::bold, "#{:<9} ", "warning");
 	fmt::println("{}", message);
 }
 
-void info(const std::string &prefix, const std::string &message, const std::source_location &)
+void info(const std::string &prefix,
+	  const std::string &message,
+	  const std::source_location &)
 {
 	relative_time_stamp();
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::medium_blue) | fmt::emphasis::bold, "#{:<9} ", "info");
+	fmt::print(fmt::fg(color_info) | fmt::emphasis::bold, "#{:<9} ", "info");
 	fmt::println("{}", message);
 }
 
-void assertion(const std::string &prefix, const std::string &message, const std::source_location &loc)
+void debug(const std::string &prefix,
+	   const std::string &message,
+	   const std::source_location &)
+{
+	relative_time_stamp();
+
+	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
+	fmt::print(fmt::fg(color_debug) | fmt::emphasis::bold, "#{:<9} ", "debug");
+	fmt::println("{}", message);
+}
+
+void assertion(const std::string &prefix,
+	       const std::string &message,
+	       const std::source_location &loc)
 {
 	relative_time_stamp();
 	
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::purple) | fmt::emphasis::bold, "#{:<9} ", "assertion");
+	fmt::print(fmt::fg(color_assert) | fmt::emphasis::bold, "#{:<9} ", "assertion");
 	fmt::println("{}", message);
-	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
-	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
+
+	triggered_from(loc);
 	
 	breakdown();
 }
 
 [[noreturn]]
-void fatal(const std::string &prefix, const std::string &message, const std::source_location &loc)
+void fatal(const std::string &prefix,
+	   const std::string &message,
+	   const std::source_location &loc)
 {
 	relative_time_stamp();
 
 	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(fmt::color::dark_red) | fmt::emphasis::bold, "#{:<9} ", "fatal");
+	fmt::print(fmt::fg(color_fatal) | fmt::emphasis::bold, "#{:<9} ", "fatal");
 	fmt::println("{}", message);
-	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
-	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
+	
+	triggered_from(loc);
 
 	breakdown();
 }
