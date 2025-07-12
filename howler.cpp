@@ -1,7 +1,9 @@
 #include <chrono>
+#include <bitset>
 
 #include <fmt/color.h>
 #include <fmt/printf.h>
+#include <source_location>
 
 #include "howler.hpp"
 
@@ -11,154 +13,163 @@
 #define breakdown	__builtin_trap
 #endif
 
-// Internal logging state
-struct Howler {
-	using clk_t = std::chrono::high_resolution_clock;
-
-	clk_t clock;
-	clk_t::time_point epoch;
-	clk_t::time_point current;
-
-	Howler() {
-		epoch = clock.now();
-		restart();
-	}
-
-	void restart() {
-		current = clock.now();
-	}
-
-	std::string relative_timestamp() {
-		auto now = clock.now();
-		auto count = std::chrono::duration_cast <std::chrono::microseconds> (now - current).count();
-		return delta_to_stamp(count);
-	}
-	
-	std::string real_timestamp() {
-		auto now = clock.now();
-		auto count = std::chrono::duration_cast <std::chrono::microseconds> (now - current).count();
-		return delta_to_stamp(count);
-	}
-
-	static std::string delta_to_stamp(int64_t delta) {
-		int32_t milliseconds = delta / 1000.0;
-
-		int32_t seconds = milliseconds / 1000;
-		milliseconds %= 1000;
-
-		int32_t minutes = seconds / 60;
-		seconds %= 60;
-
-		return fmt::format("{}:{:02d}:{:03d}", minutes, seconds, milliseconds);
-	}
-} singleton;
-
 namespace howler {
 
-// Message type colors
-static constexpr auto color_reset  = fmt::color::green;
-static constexpr auto color_error  = fmt::color::red;
-static constexpr auto color_warn   = fmt::color::golden_rod;
-static constexpr auto color_info   = fmt::color::teal;
-static constexpr auto color_debug  = fmt::color::orange;
-static constexpr auto color_fatal  = fmt::color::brown;
-static constexpr auto color_assert = fmt::color::magenta;
+// Message color palette
+static std::array <fmt::text_style, uint32_t(MessageType::eCount)> g_palette {
+	fmt::emphasis::bold | fmt::fg(fmt::color::sea_green),
+	fmt::emphasis::bold | fmt::fg(fmt::color::red),
+	fmt::emphasis::bold | fmt::fg(fmt::color::golden_rod),
+	fmt::emphasis::bold | fmt::fg(fmt::color::teal),
+	fmt::emphasis::bold | fmt::fg(fmt::color::blue_violet),
+	fmt::emphasis::bold | fmt::fg(fmt::color::brown),
+	fmt::emphasis::bold | fmt::fg(fmt::color::hot_pink),
+};
 
-void relative_time_stamp()
+void set_palette(MessageType type, const fmt::text_style &style)
 {
-	fmt::print(fmt::emphasis::faint, "[{}] ", singleton.relative_timestamp());
+	g_palette[uint32_t(type)] = style;
 }
 
-void triggered_from(const std::source_location &loc)
+// Formatting for the prefix
+static fmt::text_style g_prefix_style = fmt::emphasis::bold;
+
+std::string format_prefix(const std::string &prefix)
 {
-	fmt::print(fmt::emphasis::italic, "...triggered from {}:{}\n", loc.file_name(), loc.line());
-	fmt::print(fmt::emphasis::italic, "                  {}\n", loc.function_name());
+	return fmt::format(g_prefix_style, "{}:", prefix);
 }
 
-void reset(const std::string &prefix, const std::string &message)
+// Formatting for the message type
+static std::array <const char *const, uint32_t(MessageType::eCount)> g_type_strings {
+	"reset",
+	"error",
+	"warning",
+	"info",
+	"debug",
+	"fatal",
+	"assertion",
+};
+
+std::string format_type(MessageType type)
 {
-	fmt::print(fmt::emphasis::faint | fmt::emphasis::bold, "\n[{}] ", singleton.real_timestamp());
-
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(color_reset) | fmt::emphasis::bold, "#{:<9} ", "reset");
-	fmt::println("{}", message);
-
-	singleton.restart();
+	return fmt::format(g_palette[uint32_t(type)], "{}:",
+			g_type_strings[uint32_t(type)]);
 }
 
-void error(const std::string &prefix,
-	   const std::string &message,
-	   const std::source_location &)
-{
-	relative_time_stamp();
+// Formatting for the message itself
+static fmt::text_style g_message_style = fmt::fg(fmt::color::white);
 
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(color_error) | fmt::emphasis::bold, "#{:<9} ", "error");
-	fmt::println("{}", message);
+std::string format_message(const std::string &message)
+{
+	return fmt::format(g_message_style, "{}", message);
 }
 
-void warning(const std::string &prefix,
-	     const std::string &message,
-	     const std::source_location &)
-{
-	relative_time_stamp();
+// Formatting for the timestamp
+using Clock = std::chrono::high_resolution_clock;
 
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(color_warn) | fmt::emphasis::bold, "#{:<9} ", "warning");
-	fmt::println("{}", message);
+static Clock g_clock;
+static Clock::time_point g_epoch = g_clock.now();
+
+static std::string delta_to_stamp(int64_t delta)
+{
+	int32_t milliseconds = delta / 1000.0;
+
+	int32_t seconds = milliseconds / 1000;
+	milliseconds %= 1000;
+
+	int32_t minutes = seconds / 60;
+	seconds %= 60;
+
+	return fmt::format("[{}:{:02d}:{:03d}]", minutes, seconds, milliseconds);
 }
 
-void info(const std::string &prefix,
-	  const std::string &message,
-	  const std::source_location &)
+std::string timestamp()
 {
-	relative_time_stamp();
-
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(color_info) | fmt::emphasis::bold, "#{:<9} ", "info");
-	fmt::println("{}", message);
+	auto now = g_clock.now();
+	auto count = std::chrono::duration_cast
+		<std::chrono::microseconds>
+			(now - g_epoch).count();
+	return delta_to_stamp(count);
 }
 
-void debug(const std::string &prefix,
-	   const std::string &message,
-	   const std::source_location &)
-{
-	relative_time_stamp();
+static fmt::text_style g_time_style = fmt::fg(fmt::color::gray);
 
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(color_debug) | fmt::emphasis::bold, "#{:<9} ", "debug");
-	fmt::println("{}", message);
+std::string format_timestamp()
+{
+	return fmt::format(g_time_style, "{}", timestamp());
 }
 
-void assertion(const std::string &prefix,
-	       const std::string &message,
-	       const std::source_location &loc)
-{
-	relative_time_stamp();
-	
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(color_assert) | fmt::emphasis::bold, "#{:<9} ", "assertion");
-	fmt::println("{}", message);
+// Formatting for the source location
+static fmt::text_style g_location_style = fmt::emphasis::faint | fmt::emphasis::italic;
 
-	triggered_from(loc);
-	
-	breakdown();
+std::string format_location(const std::source_location &location)
+{
+	return fmt::format(g_location_style, "\n  from {}:{}\n  in {}",
+		location.file_name(),
+		location.line(),
+		location.function_name());
 }
 
-[[noreturn]]
-void fatal(const std::string &prefix,
-	   const std::string &message,
-	   const std::source_location &loc)
+// Logging and formatting options
+static auto g_options = []() {
+	std::bitset <uint8_t(Options::eCount)> defaults = false;
+
+	defaults[uint8_t(Options::eShowTimeStamp)] = true;
+	defaults[uint8_t(Options::eShowSourceLocation)] = false;
+	defaults[uint8_t(Options::eShowSourceLocationForFatal)] = true;
+	defaults[uint8_t(Options::eShowSourceLocationForAssertion)] = true;
+	defaults[uint8_t(Options::eBreakpointOnAssertion)] = true;
+
+	return defaults;
+} ();
+
+bool on(Options a)
 {
-	relative_time_stamp();
+	return g_options[uint8_t(a)];
+}
 
-	fmt::print(fmt::emphasis::bold, "@{} ", prefix);
-	fmt::print(fmt::fg(color_fatal) | fmt::emphasis::bold, "#{:<9} ", "fatal");
-	fmt::println("{}", message);
-	
-	triggered_from(loc);
+void set_option(Options a, bool enable)
+{
+	g_options[uint8_t(a)] = enable;
+}
 
-	breakdown();
+// Final formatted logging
+std::string default_formatter(MessageType type,
+	const std::string &prefix,
+	const std::string &message,
+	const std::source_location &location)
+{
+	std::string result;
+
+	if (on(Options::eShowTimeStamp))
+		result += format_timestamp() += " ";
+
+	result += format_prefix(prefix);
+	result += " " + format_type(type);
+	result += " " + format_message(message);
+
+	if (on(Options::eShowSourceLocation)
+			|| (on(Options::eShowSourceLocationForFatal)
+				&& type == MessageType::eFatal)
+			|| (on(Options::eShowSourceLocationForAssertion)
+				&& type == MessageType::eAssertion))
+		result += format_location(location);
+
+	return result;
+}
+
+void log(MessageType type,
+	const std::string &prefix,
+	const std::string &message,
+	const std::source_location &location)
+{
+	fmt::println("{}", default_formatter(type, prefix, message, location));
+
+	if (type == MessageType::eFatal)
+		breakdown();
+	if (on(Options::eBreakpointOnAssertion)
+			&& type == MessageType::eAssertion)
+		breakdown();
 }
 
 } // namespace howler
