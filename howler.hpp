@@ -45,6 +45,9 @@ void log(MessageType type,
 #define HOWLER_PREFIX "howler"
 #endif
 
+#define howl_enable(option) howler::set_option(option, true)
+#define howl_disable(option) howler::set_option(option, false)
+
 #define __hmt	howler::MessageType
 
 // Default prefix
@@ -67,6 +70,8 @@ void log(MessageType type,
 			fmt::format(__VA_ARGS__));	\
 	}
 
+#define howl_assert_plain(cond) howl_assert(cond, #cond)
+
 // Explicit prefix
 #define __howl_default_prefixed(prefix, type, ...)	\
 	howler::log(type, prefix, fmt::format(__VA_ARGS__))
@@ -83,3 +88,5 @@ void log(MessageType type,
 		howler::log(__hmt::eAssertion,			\
 			prefix,	fmt::format(__VA_ARGS__));	\
 	}
+
+#define howl_assert_plain_prefixed(prefix, cond) howl_assert_prefixed(prefix, cond, #cond)
