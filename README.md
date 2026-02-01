@@ -1,99 +1,96 @@
-<p align="center">
-	<img src="media/logo.png" width="256">
-</p>
+This README was written by an LLM.
 
-# Howler
+# Howler logging utilities
 
-## Overview
+`howler.hpp` provides a small logging layer with colored message types,
+configurable formatting options, and a set of convenience macros.
 
-Howler is a lightweight logging system for C++20 that provides different levels of logging messages, including assertions, fatal errors, errors, warnings, and informational messages. It leverages `fmt` for formatted output and `std::source_location` for capturing source file details automatically.
-
-## Features
-
-- Provides formatted logging messages with optional timestamps.
-- Supports different levels of logging: assertion, fatal, error, warning, and info.
-- Captures source location (file, line, function) for assertions and fatal errors.
-- Uses `fmt` for efficient string formatting and colored terminal output.
-- `__builtin_trap()` is used for assertion failures and fatal errors to halt execution.
-
-## Building
-
-Howler relies on the `fmt` printing library to format and style terminal
-messages. We recommend users to use Howler via CMake with the `add_subdirectory`
-command. See the example below, which also indicates configuration options for
-Howler.
-
-```cmake
-# Optional: set the project name for Howler to use
-add_compile_definitions(HOWLER_PREFIX="myproject")
-
-# Optional: tell Howler not to use its local fmt repository
-set(HOWLER_FMT_EXTERNAL TRUE)
-
-# Optional: include an independant repository of fmt
-add_subdirectory(thirdparty/fmt)
-
-# REQUIRED: tell CMake to include Howler
-add_subdirectory(thirdparty/howler)
-```
-
-Finally, simply include `howler.hpp` in your source file:
+## Quick start
 
 ```cpp
+#define HOWLER_IMPL
 #include "howler.hpp"
 
-// ...
+howl_info("Hello {}", "world");
+howl_warning("Low disk: {}%", 12);
 ```
 
-## Usage
+## Message types
 
-### Initialization
+The logging API categorizes output by `howler::MessageType`:
 
-Before logging, you can enable or disable timestamps:
+- `eReset`
+- `eError`
+- `eWarning`
+- `eInfo`
+- `eDebug`
+- `eFatal`
+- `eAssertion`
+
+Each type maps to a color/style entry in the palette. You can customize styles
+via `howler::set_palette`.
+
+## Options
+
+Logging formatting and behavior are controlled by `howler::Options` and
+`howler::set_option`:
+
+- `eShowTimeStamp` (default: on)
+- `eShowSourceLocation` (default: off)
+- `eShowSourceLocationForFatal` (default: on)
+- `eShowSourceLocationForAssertion` (default: on)
+- `eBreakpointOnAssertion` (default: on)
+
+The defaults are set inside `HOWLER_IMPL`.
 
 ```cpp
-howler::reset(true);  // Enable timestamps
+howler::set_option(howler::Options::eShowSourceLocation, true);
+howler::set_option(howler::Options::eBreakpointOnAssertion, false);
 ```
 
-### Logging Macros
+## Basic macros
 
-#### Assertions
+By default, all macros use the `HOWLER_PREFIX` (defaults to `"howler"`):
 
 ```cpp
-howl_assert(condition, "Message: {}", value);
+howl_error("Failed to open {}", path);
+howl_info("Connected to {}", host);
 ```
 
-Triggers an assertion failure if `condition` is false and prints the message
-along with the source file details.
+`howl_fatal` logs and then calls `std::abort()` after triggering the internal
+breakdown handler.
 
-#### Fatal Errors
+## Assertions
+
+Assertion helpers log with the `eAssertion` type when the condition is false:
 
 ```cpp
-howl_fatal("Critical failure: {}", error_code);
+howl_assert(ptr != nullptr, "ptr must not be null");
+howl_assert_plain(ptr != nullptr);
 ```
 
-Logs a fatal error and terminates execution.
+If `eBreakpointOnAssertion` is enabled, assertions trigger a breakpoint handler
+after logging.
 
-#### Errors
+## Prefixed logging
+
+When you need a custom prefix per message, use the `_prefixed` variants:
 
 ```cpp
-howl_error("An error occurred: {}", error_code);
+howl_info_prefixed("net", "Connected to {}", host);
+howl_error_prefixed("db", "Query failed: {}", err);
 ```
 
-Logs an error message without terminating execution.
+## Custom palettes
 
-#### Warnings
+Use `howler::set_palette` to change per-type styling.
 
 ```cpp
-howl_warning("Warning: {}", warning_message);
+howler::set_palette(howler::MessageType::eWarning,
+                    fmt::emphasis::bold | fmt::fg(fmt::color::orange));
 ```
 
-Logs a warning message.
+## Implementation note
 
-#### Information
-
-```cpp
-howl_info("Info: {}", info_message);
-```
-
-Logs an informational message.
+Define `HOWLER_IMPL` in exactly one translation unit before including
+`howler.hpp` to enable the implementation.
